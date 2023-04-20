@@ -4,7 +4,15 @@
  *                                                      *
  ********************************************************/
 
+#ifdef HAVE_CUDA
 #include <cuda_runtime.h>
+typedef cudaStream_t hiplike_stream_t;
+#endif
+
+#ifdef HAVE_HIP
+#include <hip/hip_runtime.h>
+typedef hipStream_t hiplike_stream_t;
+#endif
 
 #ifndef FORM_BEAM_H
 #define FORM_BEAM_H
@@ -118,7 +126,7 @@ void cu_form_beam( uint8_t *data, struct make_beam_opts *opts, ComplexDouble ***
                    int npointing, int nstation, int nchan,
                    int npol, int outpol_coh, double invw, struct gpu_formbeam_arrays *g,
                    ComplexDouble ****detected_beam, float *coh, float *incoh,
-                   cudaStream_t *streams, int incoh_check, int nchunk  );
+                   hiplike_stream_t *streams, int incoh_check, int nchunk  );
 
 float *create_pinned_data_buffer_psrfits( size_t size );
         

@@ -27,6 +27,8 @@
 //
 //============================================================================
 
+
+#include <hip/hip_runtime.h>
 #include <string.h>
 #include <stdio.h>
 #include "vdifio.h"

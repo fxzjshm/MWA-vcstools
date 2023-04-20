@@ -32,8 +32,15 @@
 #include <omp.h>
 
 #ifdef HAVE_CUDA
-
 #include <cuda_runtime.h>
+#endif
+
+#ifdef HAVE_HIP
+#include <hip/hip_runtime.h>
+#endif
+
+#if defined(HAVE_CUDA) || defined(HAVE_HIP)
+
 #include "ipfb.h"
 
 double now(){
@@ -52,7 +59,7 @@ double now(){
 
 int main(int argc, char **argv)
 {
-    #ifndef HAVE_CUDA
+    #if !defined(HAVE_CUDA) && !defined(HAVE_HIP)
     // Initialise FFTW with OpenMP
     fftw_init_threads();
     fftw_plan_with_nthreads( omp_get_max_threads() );
@@ -403,9 +410,15 @@ int main(int argc, char **argv)
     }
 
     // Set up parrel streams
-    cudaStream_t streams[npointing];
+    hiplike_stream_t streams[npointing];
+#ifdef HAVE_CUDA
     for ( p = 0; p < npointing; p++ )
         cudaStreamCreate(&(streams[p])) ;
+#endif
+#ifdef HAVE_HIP
+    for ( p = 0; p < npointing; p++ )
+        hipStreamCreate(&(streams[p])) ;
+#endif
 
     fprintf( stderr, "[%f]  **BEGINNING BEAMFORMING WITH %s BEAM MODEL**\n", NOW-begintime,
         (opts.beam_model == BEAM_ANALYTIC ? "ANALYTIC" : "FEE2016") );
@@ -577,10 +590,18 @@ int main(int argc, char **argv)
     //free( data_buffer_coh    );
     //free( data_buffer_incoh  );
     //free( data_buffer_vdif   );
+#ifdef HAVE_CUDA
     cudaFreeHost( data_buffer_coh   );
     cudaFreeHost( data_buffer_incoh );
     cudaFreeHost( data_buffer_vdif  );
     cudaFreeHost( data );
+#endif
+#ifdef HAVE_HIP
+    hipHostFree( data_buffer_coh   );
+    hipHostFree( data_buffer_incoh );
+    hipHostFree( data_buffer_vdif  );
+    hipHostFree( data );
+#endif
 
     free( opts.obsid        );
     free( opts.time_utc     );
@@ -627,7 +648,7 @@ int main(int argc, char **argv)
         free_fee_beam( beam );
     }
 
-#ifndef HAVE_CUDA
+#if !defined(HAVE_CUDA) && !defined(HAVE_HIP)
     // Clean up FFTW OpenMP
     fftw_cleanup_threads();
 #endif

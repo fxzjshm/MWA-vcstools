@@ -7,7 +7,16 @@
 #ifndef IPFB_H
 #define IPFB_H
 
+#ifdef HAVE_CUDA
 #include <cuda_runtime.h>
+typedef cudaStream_t hiplike_stream_t;
+#endif
+
+#ifdef HAVE_HIP
+#include <hip/hip_runtime.h>
+typedef hipStream_t hiplike_stream_t;
+#endif
+
 #include "mycomplex.h"
 
 struct gpu_ipfb_arrays

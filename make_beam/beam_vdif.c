@@ -21,7 +21,7 @@
 #include "filter.h"
 #include "mycomplex.h"
 
-#ifndef HAVE_CUDA
+#if !defined(HAVE_CUDA) && !defined(HAVE_HIP)
 #include <omp.h>
 #endif
 
@@ -279,7 +279,7 @@ void to_offset_binary(int8_t *i, int n)
     }
 }
 
-#ifndef HAVE_CUDA
+#if !defined(HAVE_CUDA) && !defined(HAVE_HIP)
 
 void invert_pfb_ifft( ComplexDouble ***detected_beam, int file_no,
                       int nsamples, int nchan, int npol,

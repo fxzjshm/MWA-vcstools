@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 cmake_policy(SET CMP0012 NEW)
 cmake_policy(SET CMP0048 NEW)
 
-project (make_beam LANGUAGES C CUDA)
+project (make_beam LANGUAGES C)
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
@@ -13,7 +13,24 @@ else()
     message("No OpenMP")
 endif()
 
-if(CUDA_FOUND)
+# Search for rocm in common locations
+list(APPEND CMAKE_PREFIX_PATH /opt/rocm)
+# Find hip
+find_package(hip)
+set(HIP_LIBRARY hip::host hip::device)
+message(WARNING "HIP_INCLUDE_DIR = ${HIP_INCLUDE_DIR}")
+
+
+if(hip_FOUND)
+
+    set(sources "${PROJECT_SOURCE_DIR}/beam_common.c;${PROJECT_SOURCE_DIR}/beam_psrfits.c;${PROJECT_SOURCE_DIR}/beam_vdif.c;${PROJECT_SOURCE_DIR}/filter.c;${PROJECT_SOURCE_DIR}/form_beam.hip.cpp;${PROJECT_SOURCE_DIR}/get_delays_small.c;${PROJECT_SOURCE_DIR}/ipfb.hip.cpp;make_beam.c;${PROJECT_SOURCE_DIR}/ascii_header.c;${PROJECT_SOURCE_DIR}/vdifio.c")
+    add_executable(make_beam ${sources})
+    # -lineinfo
+    set_target_properties(make_beam PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -DHAVE_HIP -DHYPERBEAM_HDF5=\\\"${HYPERBEAM_HDF5}\\\"")
+    include_directories(${FFTW3_INCLUDE_DIR} ${PSRFITS_UTILS_INCLUDE_DIR} ${CFITSIO_INCLUDE_DIR} ${PAL_INCLUDE_DIR} ${HYPERBEAM_INCLUDE_DIR} ${HIP_INCLUDE_DIR})
+    target_link_libraries(make_beam -fopenmp ${PSRFITS_UTILS_LIBRARY} ${CFITSIO_LIBRARY} ${PAL_LIBRARY} ${M_LIBRARY} ${HYPERBEAM_LIB} ${HIP_LIBRARY})
+
+elseif(CUDA_FOUND)
 
     set(sources "${PROJECT_SOURCE_DIR}/beam_common.c;${PROJECT_SOURCE_DIR}/beam_psrfits.c;${PROJECT_SOURCE_DIR}/beam_vdif.c;${PROJECT_SOURCE_DIR}/filter.c;${PROJECT_SOURCE_DIR}/form_beam.cu;${PROJECT_SOURCE_DIR}/get_delays_small.c;${PROJECT_SOURCE_DIR}/ipfb.cu;make_beam.c;${PROJECT_SOURCE_DIR}/ascii_header.c;${PROJECT_SOURCE_DIR}/vdifio.c")
     add_executable(make_beam ${sources})
@@ -29,7 +46,7 @@ else ()
     include_directories(${FFTW3_INCLUDE_DIR} ${PSRFITS_UTILS_INCLUDE_DIR} ${CFITSIO_INCLUDE_DIR} ${PAL_INCLUDE_DIR} ${HYPERBEAM_INCLUDE_DIR})
     target_link_libraries(make_beam ${PSRFITS_UTILS_LIBRARY} ${CFITSIO_LIBRARY} ${PAL_LIBRARY} ${M_LIBRARY} ${FFTW3_OMP_LIBRARY} ${FFTW3_LIBRARY} ${HYPERBEAM_LIB})
 
-endif(CUDA_FOUND)
+endif()
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/make_beam DESTINATION bin)
 

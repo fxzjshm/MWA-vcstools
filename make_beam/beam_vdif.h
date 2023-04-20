@@ -86,7 +86,7 @@ void normalise_complex( ComplexFloat *input, int nsamples, float scale );
 
 void to_offset_binary( int8_t *i, int n );
 
-#ifndef HAVE_CUDA
+#if !defined(HAVE_CUDA) && !defined(HAVE_HIP)
 void invert_pfb_ifft( ComplexDouble ***detected_beam, int file_no,
                       int nsamples, int nchan, int npol,
                       float *data_buffer_vdif );
@@ -94,7 +94,7 @@ void invert_pfb_ifft( ComplexDouble ***detected_beam, int file_no,
 void invert_pfb_ord( ComplexDouble ***detected_beam, int file_no,
                       int nsamples, int nchan, int npol,
                       ComplexDouble **fils, int fil_size,
-                      float *data_buffer_uvdif )
+                      float *data_buffer_uvdif );
 #endif
 
 #endif

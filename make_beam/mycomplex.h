@@ -57,6 +57,55 @@
 #define  CD2F(X)        (CMakef((float)CReald(X),(float)CImagd(X)))
 #define  CF2D(X)        (CMaked((double)CRealf(X),(double)CImagf(X)))
 
+#elif defined(HAVE_HIP)
+
+#include <hip/hip_complex.h>
+
+#define  ComplexDouble  hipDoubleComplex
+#define  ComplexFloat   hipFloatComplex
+
+#define  CMakef(X,Y)    (make_hipFloatComplex(X,Y))
+#define  CMaked(X,Y)    (make_hipDoubleComplex(X,Y))
+
+#define  CAddf(X,Y)     (hipCaddf(X,Y))
+#define  CSubf(X,Y)     (hipCsubf(X,Y))
+#define  CMulf(X,Y)     (hipCmulf(X,Y))
+#define  CDivf(X,Y)     (hipCdivf(X,Y))
+
+#define  CRealf(X)      (hipCrealf(X))
+#define  CImagf(X)      (hipCimagf(X))
+
+#define  CAddd(X,Y)     (hipCadd(X,Y))
+#define  CSubd(X,Y)     (hipCsub(X,Y))
+#define  CMuld(X,Y)     (hipCmul(X,Y))
+#define  CDivd(X,Y)     (hipCdiv(X,Y))
+
+#define  CReald(X)      (hipCreal(X))
+#define  CImagd(X)      (hipCimag(X))
+
+#define  CConjf(X)      (hipConjf(X))
+#define  CConjd(X)      (hipConj(X))
+
+#define  CAbsf(X)       (hipCabsf(X))
+#define  CAbsd(X)       (hipCabs(X))
+
+#define  CExpf(X)       (CMakef(expf(CRealf(X))*cos(CImagf(X)), \
+                                expf(CRealf(X))*sin(CImagf(X))))
+#define  CExpd(X)       (CMaked(expf(CReald(X))*cos(CImagd(X)), \
+                                expf(CReald(X))*sin(CImagd(X))))
+
+#define  CSclf(X,F)     (CMakef(F*CRealf(X),F*CImagf(X)))
+#define  CScld(X,F)     (CMaked(F*CReald(X),F*CImagd(X)))
+
+#define  CRcpf(X)       (CSclf(CConjf(X),1.0/(CRealf(X)*CRealf(X) + CImagf(X)*CImagf(X))))
+#define  CRcpd(X)       (CScld(CConjd(X),1.0/(CReald(X)*CReald(X) + CImagd(X)*CImagd(X))))
+
+#define  CNegf(X)       (CSclf((X),-1.0))
+#define  CNegd(X)       (CScld((X),-1.0))
+
+#define  CD2F(X)        (CMakef((float)CReald(X),(float)CImagd(X)))
+#define  CF2D(X)        (CMaked((double)CRealf(X),(double)CImagf(X)))
+
 #else
 
 #include <complex.h>
