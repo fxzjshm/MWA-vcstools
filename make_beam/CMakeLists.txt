@@ -18,7 +18,6 @@ list(APPEND CMAKE_PREFIX_PATH /opt/rocm)
 # Find hip
 find_package(hip)
 set(HIP_LIBRARY hip::host hip::device)
-message(WARNING "HIP_INCLUDE_DIR = ${HIP_INCLUDE_DIR}")
 
 
 if(hip_FOUND)

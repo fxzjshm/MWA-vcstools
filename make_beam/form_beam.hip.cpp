@@ -417,14 +417,15 @@ void cu_form_beam( uint8_t *data, struct make_beam_opts *opts,
         }
     }
     // Copy the data to the device
-    gpuErrchk(hipMemcpyAsync( g->d_W,    g->W, g->W_size,    hipMemcpyHostToDevice ));
-    gpuErrchk(hipMemcpyAsync( g->d_J,    g->J, g->J_size,    hipMemcpyHostToDevice ));
+    gpuErrchk(hipMemcpy( g->d_W,    g->W, g->W_size,    hipMemcpyHostToDevice ));
+    gpuErrchk(hipMemcpy( g->d_J,    g->J, g->J_size,    hipMemcpyHostToDevice ));
+    gpuErrchk( hipDeviceSynchronize() );
 
     // Divide the gpu calculation into multiple time chunks so there is enough room on the GPU
     for (int ichunk = 0; ichunk < nchunk; ichunk++)
     {
         //int dataoffset = ichunk * g->data_size / sizeof(uint8_t);
-        gpuErrchk(hipMemcpyAsync( g->d_data,
+        gpuErrchk(hipMemcpy( g->d_data,
                                    data + ichunk * g->data_size / sizeof(uint8_t),
                                    g->data_size, hipMemcpyHostToDevice ));
 
@@ -437,6 +438,7 @@ void cu_form_beam( uint8_t *data, struct make_beam_opts *opts,
         dim3 chan_samples( nchan, opts->sample_rate / nchunk );
         dim3 stat( NSTATION );
 
+        gpuErrchk( hipDeviceSynchronize() );
         // convert the data and multiply it by J
         invj_the_data<<<chan_samples, stat>>>( g->d_data, g->d_J, g->d_W, g->d_JDx, g->d_JDy,
                                                g->d_Ia, incoh_check );
@@ -471,9 +473,9 @@ void cu_form_beam( uint8_t *data, struct make_beam_opts *opts,
     gpuErrchk( hipDeviceSynchronize() );
 
     // Copy the results back into host memory
-    gpuErrchk(hipMemcpyAsync( g->Bd, g->d_Bd,    g->Bd_size,    hipMemcpyDeviceToHost ));
-    gpuErrchk(hipMemcpyAsync( incoh, g->d_incoh, g->incoh_size, hipMemcpyDeviceToHost ));
-    gpuErrchk(hipMemcpyAsync( coh,   g->d_coh,   g->coh_size,   hipMemcpyDeviceToHost ));
+    gpuErrchk(hipMemcpy( g->Bd, g->d_Bd,    g->Bd_size,    hipMemcpyDeviceToHost ));
+    gpuErrchk(hipMemcpy( incoh, g->d_incoh, g->incoh_size, hipMemcpyDeviceToHost ));
+    gpuErrchk(hipMemcpy( coh,   g->d_coh,   g->coh_size,   hipMemcpyDeviceToHost ));
 
     // Copy the data back from Bd back into the detected_beam array
     // Make sure we put it back into the correct half of the array, depending
