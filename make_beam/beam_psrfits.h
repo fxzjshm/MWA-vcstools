@@ -10,6 +10,10 @@
 #include "psrfits.h"
 #include "mycomplex.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void printf_psrfits( struct psrfits *pf );  /* Prints values in psrfits struct to stdout */
 
 void populate_psrfits_header(
@@ -34,5 +38,8 @@ void correct_psrfits_stt( struct psrfits *pf );
 void psrfits_write_second( struct psrfits *pf, float *data_buffer, int nchan,
         int outpol, int p);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

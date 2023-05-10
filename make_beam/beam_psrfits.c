@@ -10,10 +10,17 @@
 #include <math.h>
 #include "star/pal.h"
 #include "star/palmac.h"
-#include "psrfits.h"
 #include "beam_common.h"
 #include "beam_psrfits.h"
 #include "mycomplex.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "psrfits.h"
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 void printf_psrfits( struct psrfits *pf) {
     fprintf(stdout, "\nPSRFITS:\n");
@@ -311,7 +318,7 @@ void psrfits_write_second( struct psrfits *pf, float *data_buffer, int nchan,
 //    }
     // pointing_offset makes the buffer start at the memory assigned the pointing
     int pointing_offset = p * sec_size;
-    float *pointing_buffer  = malloc( sec_size * sizeof(float) );
+    float *pointing_buffer  = (float *) malloc( sec_size * sizeof(float) );
     memcpy(pointing_buffer, data_buffer + pointing_offset, sec_size * sizeof(float) );
     float_to_unit8( pointing_buffer, sec_size, out_buffer_8);
     

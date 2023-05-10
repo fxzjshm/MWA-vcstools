@@ -36,7 +36,11 @@ find_package(FFTW3 COMPONENTS single openmp)
 find_package(XGPU)
 find_package(HYPERBEAM)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -fPIC -Wall -Wextra ${OpenMP_C_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -fPIC -Wall -Wextra")
+
+if(OpenMP_C_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+endif()
 
 EXECUTE_PROCESS( COMMAND gcc -dumpversion GCC_VERSION )
 if(GCC_VERSION EQUAL 7.30)

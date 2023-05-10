@@ -240,7 +240,7 @@ void flatten_bandpass(int nstep, int nchan, int npol, void *data)
 
 
     // accumulate abs(data) over all time samples and save into band
-    data_ptr = data;
+    data_ptr = (float *) data;
     for (i=0;i<nstep;i++) { // time steps
         for (p = 0;p<npol;p++) { // pols
             for (j=0;j<nchan;j++){ // channels
@@ -252,7 +252,7 @@ void flatten_bandpass(int nstep, int nchan, int npol, void *data)
     }
 
     // calculate and apply the normalisation to the data
-    data_ptr = data;
+    data_ptr = (float *) data;
     for (i=0;i<nstep;i++) {
         for (p = 0;p<npol;p++) {
             for (j=0;j<nchan;j++){

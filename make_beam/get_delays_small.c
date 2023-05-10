@@ -241,7 +241,7 @@ void utc2mjd(char *utc_str, double *intmjd, double *fracmjd) {
 
     int J=0;
     struct tm *utc;
-    utc = calloc(1,sizeof(struct tm));
+    utc = (struct tm *) calloc(1,sizeof(struct tm));
 
     sscanf(utc_str, "%d-%d-%dT%d:%d:%d",
             &utc->tm_year, &utc->tm_mon, &utc->tm_mday,

@@ -19,6 +19,10 @@ typedef hipStream_t hiplike_stream_t;
 
 #include "mycomplex.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct gpu_ipfb_arrays
 {
     int ntaps;
@@ -43,5 +47,9 @@ void malloc_ipfb( struct gpu_ipfb_arrays *g, int ntaps, int nsamples,
         int nchan, int npol, int fil_size, int npointing );
 
 void free_ipfb( struct gpu_ipfb_arrays *g );
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
