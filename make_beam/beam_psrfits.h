@@ -7,12 +7,13 @@
 #ifndef BEAM_PSRFITS_H
 #define BEAM_PSRFITS_H
 
-#include "psrfits.h"
 #include "mycomplex.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "psrfits.h"
 
 void printf_psrfits( struct psrfits *pf );  /* Prints values in psrfits struct to stdout */
 
