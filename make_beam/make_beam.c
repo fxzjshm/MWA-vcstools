@@ -380,7 +380,8 @@ int main(int argc, char **argv)
     int bytes_per_file = opts.sample_rate * nstation * npol * nchan;
 
     //cudaMallocHost( (void**)&data, bytes_per_file * sizeof(uint8_t) );
-    uint8_t *data = (uint8_t *)malloc( bytes_per_file * sizeof(uint8_t) );
+    uint8_t *data;
+    hipMallocHost( (void**)&data, bytes_per_file * sizeof(uint8_t) );
     assert(data);
 
     /* Allocate host and device memory for the use of the cu_form_beam function */
