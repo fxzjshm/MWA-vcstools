@@ -1,5 +1,5 @@
-FROM sugonhub/dtk:22.10.1-ubuntu20.04-mpi4.0-py38
-#FROM sugonhub/dtk:22.10.1-ubuntu20.04-mpi4.0-py38 AS stage1
+#FROM sugonhub/dtk:22.10.1-ubuntu20.04-mpi4.0-py38
+FROM sugonhub/dtk:22.10.1-ubuntu20.04-mpi4.0-py38 AS stage1
 
 # Install package dependencies
 ARG DEBIAN_FRONTEND=noninteractive
@@ -28,11 +28,10 @@ RUN apt-get update && \
     apt-get clean all && \
     rm -r /var/lib/apt/lists/*
 
-
 ### Build psrfits_utils ###
 ARG PSR_CONFIG_OPTS="--prefix=/usr"
 WORKDIR /code/psrfits-build
-RUN git clone https://github.com/demorest/psrfits_utils.git && \
+RUN git clone https://github.com/scottransom/psrfits_utils.git && \
     cd psrfits_utils && \
     echo "m4_ifdef([AM_PROG_AR], [AM_PROG_AR])" >> configure.ac && \
     autoreconf --install --force && \
@@ -50,9 +49,17 @@ RUN git clone https://github.com/demorest/psrfits_utils.git && \
 #    make ${XGPU_MAKE_OPTS} && \
 #    make install prefix=${XGPU_PREFIX}
 
+
+### hyperbeam environment
+ENV LD_LIBRARY_PATH="/code/hyperbeam/mwa_hyperbeam/include:/code/hyperbeam/mwa_hyperbeam/lib:${LD_LIBRARY_PATH}"
+ENV HYPERBEAM_ROOT="/code/hyperbeam/mwa_hyperbeam/"
+ENV HYPERBEAM_INCLUDE_DIR="/code/hyperbeam/mwa_hyperbeam/include"
+ENV HYPERBEAM_LIB="/code/hyperbeam/mwa_hyperbeam/lib"
+ENV RUST_BACKTRACE=1
+
 # end of stage1
 
-#FROM stage1 AS stage2-hyperbeam
+FROM stage1 AS stage2-hyperbeam
 # will drop rust things, only keep hyperbeam
 
 ### Install rust and cargo
@@ -70,11 +77,11 @@ RUN curl https://sh.rustup.rs -sSf |  bash -s -- -y
 
 
 ### Install hyperbeam
-ENV LD_LIBRARY_PATH="/code/hyperbeam/mwa_hyperbeam/include:/code/hyperbeam/mwa_hyperbeam/lib:${LD_LIBRARY_PATH}"
-ENV HYPERBEAM_ROOT="/code/hyperbeam/mwa_hyperbeam/"
-ENV HYPERBEAM_INCLUDE_DIR="/code/hyperbeam/mwa_hyperbeam/include"
-ENV HYPERBEAM_LIB="/code/hyperbeam/mwa_hyperbeam/lib"
-ENV RUST_BACKTRACE=1
+#ENV LD_LIBRARY_PATH="/code/hyperbeam/mwa_hyperbeam/include:/code/hyperbeam/mwa_hyperbeam/lib:${LD_LIBRARY_PATH}"
+#ENV HYPERBEAM_ROOT="/code/hyperbeam/mwa_hyperbeam/"
+#ENV HYPERBEAM_INCLUDE_DIR="/code/hyperbeam/mwa_hyperbeam/include"
+#ENV HYPERBEAM_LIB="/code/hyperbeam/mwa_hyperbeam/lib"
+#ENV RUST_BACKTRACE=1
 WORKDIR /code/hyperbeam
 RUN git clone --depth 1 --branch v0.5.1 https://github.com/MWATelescope/mwa_hyperbeam.git
 RUN cd mwa_hyperbeam && \
@@ -85,6 +92,8 @@ RUN cd mwa_hyperbeam && \
     cp target/release/libmwa_hyperbeam.so target/release/libmwa_hyperbeam.a lib/ && \
     echo "/code/hyperbeam/mwa_hyperbeam/lib" >/etc/ld.so.conf.d/mwa.conf && ldconfig
 
+FROM stage1 AS stage3
+COPY --from=stage2-hyperbeam /code/hyperbeam /code/hyperbeam
 
 ### Install ERFA v1.7.0
 #WORKDIR /code/erfa
