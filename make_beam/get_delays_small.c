@@ -351,7 +351,7 @@ void get_delays(
     double *jones[nconfigs]; // (see hash_dipole_configs() for explanation of this array)
     // Allocate the memory here since hyperbeam expects a "buffer" as input
     for (n = 0; n < nconfigs; n++) {
-        jones[n] = malloc(8*sizeof(double));
+        jones[n] = (double *) malloc(8*sizeof(double));
     }
 
     double Fnorm;
