@@ -1,4 +1,4 @@
-FROM rocm/dev-ubuntu-18.04:4.0.1
+FROM rocm/dev-ubuntu-18.04:4.0.1 as stage-build
 # fix url of rocm repo
 RUN rm /etc/apt/sources.list.d/rocm.list
 
@@ -17,7 +17,6 @@ RUN apt-get update && \
          libcfitsio-dev \
          libfftw3-dev \
          libhdf5-dev \
-         liberfa-dev \
          libtool \
          wget \
          python3.8 \
@@ -29,9 +28,15 @@ RUN apt-get update && \
     apt-get clean all && \
     rm -r /var/lib/apt/lists/*
 
+ENV VCSTOOLS_PREFIX="/opt/vcstools"
+ENV LD_LIBRARY_PATH="${VCSTOOLS_PREFIX}/lib:${LD_LIBRARY_PATH}"
+ENV LIBRARY_PATH="${VCSTOOLS_PREFIX}/lib:${LIBRARY_PATH}"
+ENV PATH="${VCSTOOLS_PREFIX}/lib:${PATH}"
+ENV CPATH="${VCSTOOLS_PREFIX}/include:${CPATH}"
+ENV PKG_CONFIG_PATH="${VCSTOOLS_PREFIX}/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 ### Build psrfits_utils ###
-ARG PSR_CONFIG_OPTS="--prefix=/usr"
+ARG PSR_CONFIG_OPTS="--prefix=${VCSTOOLS_PREFIX}"
 WORKDIR /code/psrfits-build
 RUN git clone https://github.com/demorest/psrfits_utils.git && \
     cd psrfits_utils && \
@@ -65,6 +70,16 @@ RUN curl https://sh.rustup.rs -sSf |  bash -s -- -y
 #    apt update -y && \
 #    apt install -y cmake
 
+### Install ERFA v1.7.0
+WORKDIR /code/erfa
+ENV ERFA_ROOT /code/erfa/1.7.0
+RUN wget https://github.com/liberfa/erfa/releases/download/v1.7.0/erfa-1.7.0.tar.gz && \
+    tar -xf erfa-1.7.0.tar.gz && \
+    cd erfa-1.7.0 && \
+    ./configure --prefix="${VCSTOOLS_PREFIX}" && \
+    make && \
+    make check && \
+    make install
 
 ### Install hyperbeam
 ENV LD_LIBRARY_PATH="/code/hyperbeam/mwa_hyperbeam/include:/code/hyperbeam/mwa_hyperbeam/lib:${LD_LIBRARY_PATH}"
@@ -73,26 +88,15 @@ ENV HYPERBEAM_INCLUDE_DIR="/code/hyperbeam/mwa_hyperbeam/include"
 ENV HYPERBEAM_LIB="/code/hyperbeam/mwa_hyperbeam/lib"
 ENV RUST_BACKTRACE=1
 WORKDIR /code/hyperbeam
-RUN git clone --depth 1 --branch v0.3.3 https://github.com/MWATelescope/mwa_hyperbeam.git
+RUN git clone --depth 1 --branch v0.5.1 https://github.com/MWATelescope/mwa_hyperbeam.git
 RUN cd mwa_hyperbeam && \
     wget http://ws.mwatelescope.org/static/mwa_full_embedded_element_pattern.h5 && \
     cargo test && \
     cargo build --release && \
     mkdir -p lib && \
     cp target/release/libmwa_hyperbeam.so target/release/libmwa_hyperbeam.a lib/ && \
+    cargo clean && \
     echo "/code/hyperbeam/mwa_hyperbeam/lib" >/etc/ld.so.conf.d/mwa.conf && ldconfig
-
-
-### Install ERFA v1.7.0
-#WORKDIR /code/erfa
-#ENV ERFA_ROOT /code/erfa/1.7.0
-#RUN wget https://github.com/liberfa/erfa/releases/download/v1.7.0/erfa-1.7.0.tar.gz && \
-#    tar -xf erfa-1.7.0.tar.gz && \
-#    cd erfa-1.7.0 && \
-#    ./configure --prefix="${ERFA_ROOT}" && \
-#    make && \
-#    make check && \
-#    make install
 
 
 ### Install PAL v0.9.8
@@ -101,7 +105,7 @@ ENV PAL_ROOT /code/pal/1.7.0
 RUN wget https://github.com/Starlink/pal/releases/download/v0.9.8/pal-0.9.8.tar.gz && \
     tar -xf pal-0.9.8.tar.gz && \
     cd pal-0.9.8 && \
-    ./configure --prefix="${PAL_ROOT}" --without-starlink --with-erfa="${ERFA_ROOT}" && \
+    ./configure --prefix="${VCSTOOLS_PREFIX}" --without-starlink --with-erfa="${VCSTOOLS_PREFIX}" && \
     make && \
     make install
 
@@ -109,21 +113,50 @@ RUN wget https://github.com/Starlink/pal/releases/download/v0.9.8/pal-0.9.8.tar.
 ### Install vcstools ###
 WORKDIR /code/vcstools-build
 COPY . /code/vcstools-build
-RUN python3.8 -m pip install --upgrade pip && \
-    python3.8 -m pip -V && \
-    python3.8 -m pip install . && \
-    mkdir -p build && \
+#RUN python3.8 -m pip install --upgrade pip && \
+#    python3.8 -m pip -V && \
+#    python3.8 -m pip install . && \
+RUN mkdir -p build && \
     cd build && \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr \
-      -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
-      -DPAL_ROOT_DIR=${PAL_ROOT} \
+    cmake -DCMAKE_INSTALL_PREFIX=${VCSTOOLS_PREFIX} \
+      -DPAL_ROOT_DIR=${VCSTOOLS_PREFIX} \
       -DCMAKE_BEAMFORMER=1 \
       -DHYPERBEAM_ROOT=${HYPERBEAM_ROOT} \
       -DHYPERBEAM_HDF5_DIR=/code/hyperbeam/mwa_hyperbeam/ \
       -DCTESTS=0 \
       -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang \
       -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ \
-      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_C_FLAGS="-O3 -g" \
+      -DCMAKE_CXX_FLAGS="-O3 -g" \
       .. && \
-    make install
+    make install -j`nproc`
+
+FROM kaichao/rocm-runtime_ubuntu-1804:4.0.1 AS stage-run
+COPY --from=stage-build /code /code
+COPY --from=stage-build /opt/vcstools /opt/vcstools
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && \
+    apt-get install -y \
+         libcfitsio-bin \
+         libcfitsio-dev \
+         libfftw3-dev \
+         libhdf5-dev \
+         python3.8 \
+         python3-pip \
+         python3-setuptools && \
+    apt-get clean all && \
+    rm -r /var/lib/apt/lists/*
+
+RUN pip3 install numpy astropy
+
+ENV VCSTOOLS_PREFIX="/opt/vcstools"
+ENV LD_LIBRARY_PATH="${VCSTOOLS_PREFIX}/lib:${LD_LIBRARY_PATH}"
+ENV PATH="${VCSTOOLS_PREFIX}/bin:${PATH}"
+
+COPY --from=stage-build /opt/rocm-4.0.1/lib /opt/rocm-4.0.1/lib
+COPY --from=stage-build /opt/rocm-4.0.1/hip/lib /opt/rocm-4.0.1/hip/lib
+COPY --from=stage-build /opt/rocm-4.0.1/llvm/lib/libomp.so /opt/rocm-4.0.1/llvm/lib/libomp.so
+RUN mkdir /opt/rocm-4.0.1/llvm/bin  # because path of libomp.so is "/opt/rocm-4.0.1/llvm/bin/../lib/libomp.so"
+
 CMD ["/bin/bash"]
