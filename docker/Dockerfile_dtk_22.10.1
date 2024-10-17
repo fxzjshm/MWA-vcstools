@@ -31,7 +31,7 @@ RUN apt-get update && \
 ### Build psrfits_utils ###
 ARG PSR_CONFIG_OPTS="--prefix=/usr"
 WORKDIR /code/psrfits-build
-RUN git clone https://github.com/scottransom/psrfits_utils.git && \
+RUN git clone https://github.com/demorest/psrfits_utils.git && \
     cd psrfits_utils && \
     echo "m4_ifdef([AM_PROG_AR], [AM_PROG_AR])" >> configure.ac && \
     autoreconf --install --force && \
