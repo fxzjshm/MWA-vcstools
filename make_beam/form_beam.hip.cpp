@@ -11,11 +11,11 @@
 #include <time.h>
 #include <hip/hip_runtime.h>
 
-extern "C" {
+//extern "C" {
 #include "beam_common.h"
 #include "form_beam.h"
 #include "mycomplex.h"
-}
+//}
 
 
 #define hipCheckErrors(msg) \
@@ -440,13 +440,15 @@ void cu_form_beam( uint8_t *data, struct make_beam_opts *opts,
 
         gpuErrchk( hipDeviceSynchronize() );
         // convert the data and multiply it by J
-        invj_the_data<<<chan_samples, stat>>>( g->d_data, g->d_J, g->d_W, g->d_JDx, g->d_JDy,
+        hipLaunchKernelGGL(invj_the_data, chan_samples, stat, 0, 0, g->d_data, g->d_J, g->d_W, g->d_JDx, g->d_JDy,
                                                g->d_Ia, incoh_check );
+
+        gpuErrchk( hipDeviceSynchronize() );
 
         // Send off a parrellel cuda stream for each pointing
         for ( int p = 0; p < npointing; p++ )
         {
-            beamform_kernel<<<chan_samples, stat, 0, streams[p]>>>( g->d_JDx, g->d_JDy,
+            hipLaunchKernelGGL(beamform_kernel, chan_samples, stat, 0, streams[p], g->d_JDx, g->d_JDy,
                             g->d_W, g->d_Ia, invw,
                             p, outpol_coh , incoh_check, ichunk*opts->sample_rate/nchunk, nchunk,
                             g->d_Bd, g->d_coh, g->d_incoh );
@@ -460,13 +462,13 @@ void cu_form_beam( uint8_t *data, struct make_beam_opts *opts,
     // Flatten the bandpass
     if ( incoh_check )
     {
-        flatten_bandpass_I_kernel<<<1, nchan, 0, streams[0]>>>( g->d_incoh,
+        hipLaunchKernelGGL(flatten_bandpass_I_kernel, 1, nchan, 0, streams[0], g->d_incoh,
                                                                 opts->sample_rate );
         gpuErrchk( hipPeekAtLastError() );
     }
     // Now do the same for the coherent beam
     dim3 chan_stokes(nchan, outpol_coh);
-    flatten_bandpass_C_kernel<<<npointing, chan_stokes, 0, streams[0]>>>( g->d_coh,
+    hipLaunchKernelGGL(flatten_bandpass_C_kernel, npointing, chan_stokes, 0, streams[0], g->d_coh,
                                                                 opts->sample_rate );
     gpuErrchk( hipPeekAtLastError() );
 

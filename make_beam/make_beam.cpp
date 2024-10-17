@@ -15,11 +15,12 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include "ascii_header.h"
-#include "mwa_header.h"
 #include <glob.h>
 #include <fcntl.h>
 #include <assert.h>
+
+#include "ascii_header.h"
+#include "mwa_header.h"
 #include "beam_common.h"
 #include "beam_psrfits.h"
 #include "beam_vdif.h"
@@ -29,6 +30,7 @@
 #include "psrfits.h"
 #include "mycomplex.h"
 #include "form_beam.h"
+
 #include <omp.h>
 
 #ifdef HAVE_CUDA
@@ -42,6 +44,8 @@
 #if defined(HAVE_CUDA) || defined(HAVE_HIP)
 
 #include "ipfb.h"
+
+#define hipMallocHost hipHostMalloc
 
 double now(){
   struct timespec t;

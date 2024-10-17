@@ -57,7 +57,7 @@
 #define  CD2F(X)        (CMakef((float)CReald(X),(float)CImagd(X)))
 #define  CF2D(X)        (CMaked((double)CRealf(X),(double)CImagf(X)))
 
-#elif defined(HAVE_HIP)
+#elif defined(HAVE_HIP) && false
 
 #include <hip/hip_complex.h>
 
@@ -108,28 +108,47 @@
 
 #else
 
-#include <complex.h>
-#define ComplexDouble  complex double
-#define ComplexFloat   complex float
 
-#define  CMakef(X,Y)    ((X)+(Y)*I)
-#define  CMaked(X,Y)    ((X)+(Y)*I)
+#ifndef __cplusplus
+#include <complex.h>
+#define ComplexDouble  _Complex double
+#define ComplexFloat   _Complex float
+
+#define  CMakef(X,Y)    ((X+(Y*I)))
+#define  CMaked(X,Y)    ((X+(Y*I)))
+
+#define  CRealf(X)      (crealf(X))
+#define  CImagf(X)      (cimagf(X))
+
+#define  CReald(X)      (creal(X))
+#define  CImagd(X)      (cimag(X))
+
+#else
+
+#include <complex>
+#define ComplexDouble std::complex<double>
+#define ComplexFloat  std::complex<float>
+
+#define  CMakef(X,Y)    ComplexFloat(X,Y)
+#define  CMaked(X,Y)    ComplexDouble(X,Y)
+
+#define  CRealf(X)      ((X).real())
+#define  CImagf(X)      ((X).imag())
+
+#define  CReald(X)      ((X).real())
+#define  CImagd(X)      ((X).imag())
+
+#endif
 
 #define  CAddf(X,Y)     ((X)+(Y))
 #define  CSubf(X,Y)     ((X)-(Y))
 #define  CMulf(X,Y)     ((X)*(Y))
 #define  CDivf(X,Y)     ((X)/(Y))
 
-#define  CRealf(X)      (crealf(X))
-#define  CImagf(X)      (cimagf(X))
-
 #define  CAddd(X,Y)     ((X)+(Y))
 #define  CSubd(X,Y)     ((X)-(Y))
 #define  CMuld(X,Y)     ((X)*(Y))
 #define  CDivd(X,Y)     ((X)/(Y))
-
-#define  CReald(X)      (creal(X))
-#define  CImagd(X)      (cimag(X))
 
 #define  CConjf(X)      (conjf(X))
 #define  CConjd(X)      (conj(X))

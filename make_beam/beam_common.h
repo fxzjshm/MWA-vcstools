@@ -28,6 +28,10 @@
 #define BEAM_ANALYTIC 0
 #define BEAM_FEE2016  1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // A structure to read in all the relevant info from the observation metafits
 // file.
 struct metafits_info {
@@ -173,5 +177,10 @@ void mult2x2d(ComplexDouble *M1, ComplexDouble *M2, ComplexDouble *Mout);
 void mult2x2d_RxC(double *M1, ComplexDouble *M2, ComplexDouble *Mout);
 void conj2x2(ComplexDouble *M, ComplexDouble *Mout);
 double norm2x2(ComplexDouble *M, ComplexDouble *Mout);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

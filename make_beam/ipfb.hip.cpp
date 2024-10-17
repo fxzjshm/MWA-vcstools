@@ -10,10 +10,10 @@
 #include <math.h>
 #include <hip/hip_runtime.h>
 
-extern "C" {
+//extern "C" {
 #include "mycomplex.h"
 #include "ipfb.h"
-}
+//}
 
 inline void gpuAssert(hipError_t code, const char *file, int line, bool abort=true)
 {
@@ -200,7 +200,7 @@ void cu_invert_pfb_ord( ComplexDouble ****detected_beam, int file_no,
         fprintf( stderr, "error: PFB inversion currently only supports a single pointing\n" );
         exit(EXIT_FAILURE);
     }
-    filter_kernel<<<nsamples, nchan*npol>>>( g->d_in_real, g->d_in_imag,
+    hipLaunchKernelGGL(filter_kernel, nsamples, nchan*npol, 0, 0, g->d_in_real, g->d_in_imag,
                                              g->d_ft_real, g->d_ft_imag,
                                              g->ntaps, npol, g->d_out );
     gpuErrchk( hipPeekAtLastError() );

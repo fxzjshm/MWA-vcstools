@@ -12,6 +12,10 @@
 
 #include "mycomplex.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ComplexDouble *roots_of_unity( int N );
 
 #define FINE_PFB_FILTER_SIZE    1536
@@ -3284,5 +3288,9 @@ ComplexDouble *roots_of_unity( int N );
 2.175860100934882266e-05, \
 5.748601193541262410e-06, \
 1.037228920407734460e-16}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

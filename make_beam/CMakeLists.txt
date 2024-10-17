@@ -16,8 +16,9 @@ endif()
 # Search for rocm in common locations
 list(APPEND CMAKE_PREFIX_PATH /opt/rocm)
 # Find hip
-find_package(hip)
-set(HIP_LIBRARY hip::host hip::device)
+#find_package(hip)
+set(HIP_LIBRARY "")
+#set(HIP_LIBRARY hip::host hip::device)
 
 
 if(hip_FOUND)
@@ -41,9 +42,10 @@ elseif(CUDA_FOUND)
 else ()
 
     file(GLOB sources "*.c")
-    add_executable(make_beam ${sources})
+    add_executable(make_beam ${sources} make_beam.cpp form_beam.hip.cpp ipfb.hip.cpp)
     include_directories(${FFTW3_INCLUDE_DIR} ${PSRFITS_UTILS_INCLUDE_DIR} ${CFITSIO_INCLUDE_DIR} ${PAL_INCLUDE_DIR} ${HYPERBEAM_INCLUDE_DIR})
-    target_link_libraries(make_beam ${PSRFITS_UTILS_LIBRARY} ${CFITSIO_LIBRARY} ${PAL_LIBRARY} ${M_LIBRARY} ${FFTW3_OMP_LIBRARY} ${FFTW3_LIBRARY} ${HYPERBEAM_LIB})
+    set_target_properties(make_beam PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -DHAVE_HIP -DHYPERBEAM_HDF5=\\\"${HYPERBEAM_HDF5}\\\"")
+    target_link_libraries(make_beam ${PSRFITS_UTILS_LIBRARY} ${CFITSIO_LIBRARY} ${PAL_LIBRARY} ${M_LIBRARY} ${FFTW3_OMP_LIBRARY} ${FFTW3_LIBRARY} ${HYPERBEAM_LIB} tbb)
 
 endif()
 

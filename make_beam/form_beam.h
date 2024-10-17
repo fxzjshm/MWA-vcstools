@@ -29,9 +29,9 @@ typedef hipStream_t hiplike_stream_t;
 #define ANT2INC(ant)    (((ant)>>3)&0x03)          /* inc = (ant/8) % 4      */
 #define AP2REC(ant,pol) ((((ant)<<1)+(pol))&0x0F)  /* rec = (2*ant+pol) % 16 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 /* structure for managing data arrays to be allocated on both host and device */
 struct gpu_formbeam_arrays
@@ -141,8 +141,8 @@ void populate_weights_johnes( struct gpu_formbeam_arrays *g,
                               ComplexDouble *****invJi,
                               int npointing, int nstation, int nchan, int npol );
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+//#ifdef __cplusplus
+//} // extern "C"
+//#endif
 
 #endif

@@ -304,7 +304,8 @@ void invert_pfb_ifft( ComplexDouble ***detected_beam, int file_no,
 {
     // Allocate FFTW arrays
     int arr_size = nsamples * nchan * npol;
-    fftwf_complex *in  = (fftwf_complex *)fftwf_malloc( arr_size * sizeof(fftwf_complex) );
+//    fftwf_complex *in  = (fftwf_complex *)fftwf_malloc( arr_size * sizeof(fftwf_complex) );
+    complex float *in  = (complex float *)fftwf_malloc( arr_size * sizeof(fftwf_complex) );
 
     // Create a plan for doing column-wise 1D transforms
     int rank     = 1;

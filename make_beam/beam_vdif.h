@@ -15,6 +15,10 @@
 
 #define  VDIF_HEADER_SIZE  32
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* convenience type - this just collects all the vdif info together */
 struct vdifinfo {
 
@@ -95,6 +99,10 @@ void invert_pfb_ord( ComplexDouble ***detected_beam, int file_no,
                       int nsamples, int nchan, int npol,
                       ComplexDouble **fils, int fil_size,
                       float *data_buffer_uvdif );
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif
